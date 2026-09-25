@@ -3,7 +3,12 @@ name = "staticizer"
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
-description = "Collect typed Rust metadata and construct static data during compilation"
+description = "Cross-crate registries you can transform at compile time"
+repository = "https://github.com/da-shalev/staticizer"
+readme = "README.md"
+keywords = ["const", "compile-time", "registry", "linkme", "static"]
+categories = ["development-tools", "rust-patterns"]
+include = ["/src", "/README.md", "/USAGE.md", "/LICENSE"]
 
 [workspace]
 members = ["macros"]
