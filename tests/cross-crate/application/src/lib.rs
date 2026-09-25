@@ -1,24 +1,21 @@
-use library::Amount;
+use base::Amount;
+use library as _;
 
 #[staticizer::register]
-static EXTRA: Amount = Amount(22);
+static APPLICATION: Amount = Amount(100);
 
 mod nested {
-    use library::Amount;
+    use base::Amount;
 
     #[staticizer::register]
-    static NESTED: Amount = Amount(100);
+    static NESTED: Amount = Amount(1000);
 }
 
 #[test]
-fn a_constant_sees_its_crate_and_dependency_records() {
-    const TOTAL: u32 = library::total();
-    assert_eq!(TOTAL, 142);
-}
-
-#[test]
-fn a_dependency_sees_only_its_own_records() {
-    assert_eq!(library::total_seen_by_library(), 20);
+fn application_sees_every_crate_once() {
+    const TOTAL: u32 = base::total();
+    assert_eq!(TOTAL, 1 + 10 + 100 + 1000);
+    assert_eq!(staticizer::Records::<Amount>::ITEMS.len(), 4);
 }
 
 #[test]
@@ -27,5 +24,5 @@ fn records_are_ordered_by_module_path() {
         .iter()
         .map(|amount| amount.0)
         .collect();
-    assert_eq!(amounts, [22, 100, 20]);
+    assert_eq!(amounts, [100, 1000, 1, 10]);
 }

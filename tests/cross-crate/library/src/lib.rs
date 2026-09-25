@@ -1,21 +1,10 @@
-pub struct Amount(pub u32);
+use base::Amount;
 
 #[staticizer::register]
-static BASE: Amount = Amount(20);
+static LIBRARY: Amount = Amount(10);
 
-pub const fn total() -> u32 {
-    let amounts = staticizer::Records::<Amount>::ITEMS;
-    let mut sum = 0;
-    let mut i = 0;
-    while i < amounts.len() {
-        sum += amounts[i].0;
-        i += 1;
-    }
-    sum
-}
-
-#[inline(never)]
-pub fn total_seen_by_library() -> u32 {
-    const TOTAL: u32 = total();
-    TOTAL
+#[test]
+fn library_sees_its_own_and_base_records() {
+    const TOTAL: u32 = base::total();
+    assert_eq!(TOTAL, 1 + 10);
 }

@@ -6,7 +6,15 @@ version = 4
 name = "application"
 version = "0.0.0"
 dependencies = [
+ "base",
  "library",
+ "staticizer",
+]
+
+[[package]]
+name = "base"
+version = "0.0.0"
+dependencies = [
  "staticizer",
 ]
 
@@ -14,6 +22,7 @@ dependencies = [
 name = "library"
 version = "0.0.0"
 dependencies = [
+ "base",
  "staticizer",
 ]
 

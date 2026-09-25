@@ -6,4 +6,5 @@ publish = false
 
 [dependencies]
 staticizer = { path = "../../.." }
+base = { path = "../base" }
 library = { path = "../library" }

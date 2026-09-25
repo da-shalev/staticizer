@@ -2,7 +2,9 @@
 
 Register input values with `#[staticizer::register]` and read them in const code
 through `staticizer::Records::<T>::ITEMS`. A constant sees the records of the crate
-that evaluates it and of that crate's dependencies.
+that evaluates it and of that crate's dependencies. Rust only loads dependencies the
+code refers to, so name a dependency that is used only for its records with
+`use dependency as _;`.
 
 ## Setup
 
