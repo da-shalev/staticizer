@@ -1,5 +1,4 @@
 use base::Amount;
-use library as _;
 
 #[staticizer::register]
 static APPLICATION: Amount = Amount(100);

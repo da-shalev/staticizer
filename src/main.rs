@@ -6,6 +6,7 @@ extern crate rustc_driver;
 extern crate rustc_hir;
 extern crate rustc_interface;
 extern crate rustc_middle;
+extern crate rustc_session;
 
 use rustc_hir::def::DefKind;
 use rustc_hir::def_id::DefId;
@@ -88,6 +89,18 @@ struct StaticizerCallbacks;
 
 impl rustc_driver::Callbacks for StaticizerCallbacks {
     fn config(&mut self, config: &mut rustc_interface::interface::Config) {
+        config.opts.externs = rustc_session::config::Externs::new(
+            config
+                .opts
+                .externs
+                .iter()
+                .map(|(name, entry)| {
+                    let mut entry = entry.clone();
+                    entry.force = true;
+                    (name.clone(), entry)
+                })
+                .collect(),
+        );
         config.override_queries = Some(|_, providers| {
             ORIGINAL_EVAL
                 .set(providers.queries.eval_to_const_value_raw)
