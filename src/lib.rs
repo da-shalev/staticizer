@@ -18,6 +18,7 @@ impl<T: 'static> Records<T> {
 
 /// A value computed from the final program's registrations.
 pub trait Build: Sized + 'static {
+    #[deprecated(note = "read the final application's result with staticizer::output::<T>()")]
     const VALUE: &'static Self;
 }
 
@@ -28,6 +29,7 @@ pub trait Build: Sized + 'static {
 /// Read the result through this function; a dependency's `Build::VALUE` only sees its own inputs.
 #[inline(never)]
 #[linkage = "weak"]
+#[allow(deprecated)]
 pub fn output<T: Build>() -> &'static T {
     T::VALUE
 }

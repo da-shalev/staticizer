@@ -133,10 +133,10 @@ fn registrations(tcx: TyCtxt<'_>) -> Vec<DefId> {
         .collect();
     for &krate in tcx.crates(()) {
         for (symbol, _) in tcx.exported_non_generic_symbols(krate) {
-            if let ExportedSymbol::NonGeneric(id) = *symbol {
-                if registered(tcx, id) {
-                    records.push(id);
-                }
+            if let ExportedSymbol::NonGeneric(id) = *symbol
+                && registered(tcx, id)
+            {
+                records.push(id);
             }
         }
     }

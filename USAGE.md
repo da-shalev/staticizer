@@ -21,7 +21,7 @@ rustc-wrapper = "staticizer"
 ```
 
 The wrapper must be on `PATH`. Use the same nightly for Staticizer and the
-application, with `rustc-dev` and `llvm-tools-preview` installed. Inside
+application, with `rustc-dev` installed. Inside
 `nix develop`, omit `+nightly`.
 
 After updating the wrapper, run `cargo clean` in the application to rebuild dependency metadata; Cargo does not track changes to the wrapper executable.
