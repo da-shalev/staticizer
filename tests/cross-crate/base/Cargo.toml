@@ -1,10 +1,8 @@
 [package]
-name = "application"
+name = "base"
 version = "0.0.0"
 edition = "2024"
 publish = false
 
 [dependencies]
 staticizer = { path = "../../.." }
-base = { path = "../base" }
-library = { path = "../library" }
