@@ -63,14 +63,12 @@ fn outputs<'tcx>(tcx: TyCtxt<'tcx>) -> Vec<Instance<'tcx>> {
             if let ExportedSymbol::Generic(id, args) = symbol
                 && is_output(tcx, id)
             {
-                let instance = Instance::new_raw(id, args);
-                if !instances.contains(&instance) {
-                    instances.push(instance);
-                }
+                instances.push(Instance::new_raw(id, args));
             }
         }
     }
     instances.sort_by_cached_key(|instance| tcx.symbol_name(*instance));
+    instances.dedup();
     instances
 }
 
