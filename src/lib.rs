@@ -1,5 +1,3 @@
-#![feature(linkage)]
-
 //! Typed registrations collected by Staticizer during Rust constant evaluation.
 
 pub use staticizer_macros::register;
@@ -14,22 +12,4 @@ impl<T: 'static> Records<T> {
         let _ = size_of::<T>();
         panic!("build this application with the Staticizer compiler driver")
     };
-}
-
-/// A value computed from the final program's registrations.
-pub trait Build: Sized + 'static {
-    #[deprecated(note = "read the final application's result with staticizer::output::<T>()")]
-    const VALUE: &'static Self;
-}
-
-/// Returns the value built from the final application's registrations.
-///
-/// The compiler driver discovers concrete calls, including those in dependencies,
-/// and constructs their outputs from the final application's registrations.
-/// Read the result through this function; a dependency's `Build::VALUE` only sees its own inputs.
-#[inline(never)]
-#[linkage = "weak"]
-#[allow(deprecated)]
-pub fn output<T: Build>() -> &'static T {
-    T::VALUE
 }
