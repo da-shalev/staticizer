@@ -1,9 +1,8 @@
 # Usage
 
-Register input values, implement `Build` for the result type, and read the result
-with `staticizer::output::<T>()`. Output discovery is automatic, including calls
-inside dependencies. The compiler builds each output from the application's
-registrations and those of its dependencies.
+Register input values with `#[staticizer::register]` and read them in const code
+through `staticizer::Records::<T>::ITEMS`. A constant sees the records of the crate
+that evaluates it and of that crate's dependencies.
 
 ## Setup
 
@@ -34,37 +33,32 @@ Both crates depend on `staticizer`. The application also depends on a library na
 
 ```rust
 pub struct Amount(pub u32);
-pub struct Total(pub u32);
 
-#[staticizer::register("amounts")]
+#[staticizer::register]
 static BASE: Amount = Amount(20);
 
-impl staticizer::Build for Total {
-    const VALUE: &'static Self = &{
-        let amounts = staticizer::Records::<Amount>::ITEMS;
-        let mut sum = 0;
-        let mut i = 0;
-        while i < amounts.len() {
-            sum += amounts[i].0;
-            i += 1;
-        }
-        Total(sum)
-    };
-}
-
-pub fn total() -> u32 {
-    staticizer::output::<Total>().0
+pub const fn total() -> u32 {
+    let amounts = staticizer::Records::<Amount>::ITEMS;
+    let mut sum = 0;
+    let mut i = 0;
+    while i < amounts.len() {
+        sum += amounts[i].0;
+        i += 1;
+    }
+    sum
 }
 ```
 
-**The application's `src/main.rs`** declares another 22 and reads the result:
+**The application's `src/main.rs`** declares another 22 and evaluates the total:
 
 ```rust
-#[staticizer::register("amounts")]
+#[staticizer::register]
 static EXTRA: totals::Amount = totals::Amount(22);
 
+const TOTAL: u32 = totals::total();
+
 fn main() {
-    println!("Total: {}", totals::total());
+    println!("Total: {TOTAL}");
 }
 ```
 
@@ -74,8 +68,8 @@ Run `cargo +nightly run`. Output:
 Total: 42
 ```
 
-The compiler adds the library's 20 and the application's 22. At runtime,
-`totals::total()` reads the finished result.
+`TOTAL` is evaluated in the application, so it adds the library's 20 and the
+application's 22. Code compiled inside `totals` sees only the library's 20.
 
 Change `Amount(22)` to `Amount(5)` and rebuild:
 
@@ -84,5 +78,4 @@ Total: 25
 ```
 
 Use the same pattern to construct a graph or schedule: collect typed declarations
-with `Records::<T>::ITEMS`, transform them in `Build::VALUE`, and read the finished
-structure through `output::<T>()`.
+with `Records::<T>::ITEMS` and transform them in const code.

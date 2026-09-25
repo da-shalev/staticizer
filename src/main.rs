@@ -6,10 +6,6 @@ extern crate rustc_driver;
 extern crate rustc_hir;
 extern crate rustc_interface;
 extern crate rustc_middle;
-extern crate rustc_span;
-extern crate rustc_symbol_mangling;
-
-mod finish;
 
 use rustc_hir::def::DefKind;
 use rustc_hir::def_id::DefId;
@@ -82,7 +78,6 @@ fn evaluate_records<'tcx>(
     }
     allocation.mutability = rustc_ast::Mutability::Not;
     let alloc_id = tcx.reserve_and_set_memory_alloc(tcx.mk_const_alloc(allocation));
-    records_log(tcx, expected, records.len());
     Ok(ConstValue::Slice {
         alloc_id,
         meta: records.len() as u64,
@@ -98,17 +93,7 @@ impl rustc_driver::Callbacks for StaticizerCallbacks {
                 .set(providers.queries.eval_to_const_value_raw)
                 .unwrap();
             providers.queries.eval_to_const_value_raw = evaluate_records;
-            finish::install(providers);
         });
-    }
-}
-
-fn records_log(tcx: TyCtxt<'_>, ty: rustc_middle::ty::Ty<'_>, count: usize) {
-    if std::env::var_os("STATICIZER_TRACE").is_some() {
-        eprintln!(
-            "staticizer: {}: {count} records of {ty:?}",
-            tcx.crate_name(rustc_hir::def_id::LOCAL_CRATE)
-        );
     }
 }
 
@@ -121,7 +106,6 @@ fn main() {
     }) {
         args.remove(1);
     }
-    args.push("-Zshare-generics=no".into());
     rustc_driver::run_compiler(&args, &mut StaticizerCallbacks);
 }
 
