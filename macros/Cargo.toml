@@ -2,8 +2,12 @@
 name = "staticizer-macros"
 version = "0.1.0"
 edition = "2024"
-license = "MIT OR Apache-2.0"
-description = "Typed registration attributes for staticizer"
+license = "MIT"
+description = "Registration attribute for staticizer"
+repository = "https://github.com/da-shalev/staticizer"
+keywords = ["const", "compile-time", "registry", "staticizer"]
+categories = ["development-tools::procedural-macro-helpers"]
+include = ["/src", "/LICENSE"]
 
 [lib]
 proc-macro = true

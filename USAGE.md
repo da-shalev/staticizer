@@ -7,11 +7,13 @@ never refers to.
 
 ## Setup
 
-Install the compiler wrapper from the Staticizer checkout:
+Install the compiler wrapper with the tested nightly:
 
 ```sh
-cargo +nightly install --path . --locked --force
+cargo +nightly-2026-09-21 install staticizer --locked
 ```
+
+To install from a checkout instead, run `cargo +nightly-2026-09-21 install --path . --locked --force` in it.
 
 Add this to the application's `.cargo/config.toml`:
 
@@ -21,8 +23,8 @@ rustc-wrapper = "staticizer"
 ```
 
 The wrapper must be on `PATH`. Use the same nightly for Staticizer and the
-application, with `rustc-dev` and `llvm-tools` installed. Inside
-`nix develop`, omit `+nightly`.
+application, with `rustc-dev` and `llvm-tools` installed. Inside the checkout's
+`nix develop` shell, omit `+nightly-2026-09-21`.
 
 After updating the wrapper, run `cargo clean` in the application to rebuild dependency metadata; Cargo does not track changes to the wrapper executable.
 

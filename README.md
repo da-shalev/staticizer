@@ -1,16 +1,18 @@
 # Staticizer
 
-Staticizer collects data across Rust crates and lets you turn it into the needed static structure.
+Staticizer collects typed data from across your Rust crates and lets you turn it into static structures at compile time.
 
 ## What it adds beyond linkme
 
-[linkme](https://docs.rs/linkme/) collects declarations from multiple crates into a slice during linking. Your program can read that slice at runtime, but a Rust const function cannot use the complete slice to construct another structure.
+[linkme](https://docs.rs/linkme/) gathers declarations from multiple crates into a slice at link time. Your program can read that slice at runtime, but const code cannot use it to build another structure.
 
-Staticizer lets you process the collected data with const code to build a graph, validate dependencies, calculate an execution order, or produce another data structure—all statically.
+Staticizer hands the collected data to const code, so you can build a graph, validate dependencies, compute an execution order, or produce any other data structure entirely at compile time.
 
-**Minimum required nightly: `nightly-2026-08-19`.** Staticizer uses `rustc_private` to access compiler APIs. Build the wrapper and application with the same nightly toolchain.
+## Requirements
 
-Verified platforms: the cross-crate tests in `tests/cross-crate` run in CI on Linux, macOS and Windows on every push. Release builds, ThinLTO, and fat LTO are also tested on Linux.
+- **Nightly only: `nightly-2026-09-21`.** Staticizer wraps rustc and relies on unstable compiler APIs. Use this nightly for both the wrapper and your project, with the `rustc-dev` and `llvm-tools` components.
+- **Uses a small amount of unsafe code.**
+- **Tested on Linux, macOS and Windows** by the [cross-crate tests](tests/cross-crate). Release builds and LTO are also tested on Linux.
 
 ## Usage
 
