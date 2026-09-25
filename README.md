@@ -8,7 +8,9 @@ Staticizer collects data across Rust crates and lets you turn it into the needed
 
 Staticizer lets you process the collected data with const code to build a graph, validate dependencies, calculate an execution order, or produce another data structure—all statically.
 
-**Minimum required nightly: `nightly-2026-08-19`.** Staticizer uses `rustc_private` to access compiler APIs. Build the wrapper and application with the same nightly toolchain. Release builds, ThinLTO, and fat LTO are tested on Linux.
+**Minimum required nightly: `nightly-2026-08-19`.** Staticizer uses `rustc_private` to access compiler APIs. Build the wrapper and application with the same nightly toolchain.
+
+Verified platforms: the cross-crate tests in `tests/cross-crate` run in CI on Linux, macOS and Windows on every push. Release builds, ThinLTO, and fat LTO are also tested on Linux.
 
 ## Usage
 
