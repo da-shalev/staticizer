@@ -7,11 +7,12 @@ on:
 
 jobs:
   cross-crate:
-    name: Cross-crate tests (${{ matrix.os }})
+    name: Cross-crate tests (${{ matrix.os }}, ${{ matrix.toolchain }})
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+        toolchain: [nightly, stable]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -21,8 +22,16 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: nightly
+          toolchain: ${{ matrix.toolchain }}
           components: rustc-dev, clippy
+
+      # The one setting USAGE.md documents for stable, applied to the whole build.
+      - name: Allow the macro crate's unstable APIs on stable
+        if: matrix.toolchain == 'stable'
+        working-directory: tests/cross-crate
+        run: |
+          mkdir -p .cargo
+          printf '[env]\nRUSTC_BOOTSTRAP = "staticizer_macros"\n' > .cargo/config.toml
 
       - name: Run the cross-crate tests
         working-directory: tests/cross-crate
