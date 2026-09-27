@@ -10,7 +10,7 @@ Staticizer hands the collected data to const code, so you can build a graph, val
 
 ## Requirements
 
-- **Nightly, or stable with one setting.** Staticizer's `#[register]` macro hooks into rustc through unstable compiler APIs; on stable, [one setting](USAGE.md#setup) allows them. Cargo builds the macro with your project's toolchain like any other dependency, so there is nothing to install. The toolchain needs the `rustc-dev` component. CI tests the latest nightly.
+- **Nightly, or stable with one setting.** Staticizer's `#[register]` macro hooks into rustc through unstable compiler APIs; on stable, [one setting](USAGE.md#setup) allows them. Cargo builds the macro with your project's toolchain like any other dependency, so there is nothing to install. The toolchain needs the `rustc-dev` component. CI tests the latest nightly and the latest stable.
 - **Uses a small amount of unsafe code.**
 - **Tested on Linux, macOS and Windows** by the [cross-crate tests](tests/cross-crate). Release builds and LTO are also tested on Linux.
 
