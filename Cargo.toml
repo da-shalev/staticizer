@@ -1,6 +1,6 @@
 [package]
 name = "staticizer"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 license = "MIT"
 description = "Cross-crate registries you can transform at compile time"
@@ -16,4 +16,4 @@ default-members = [".", "macros"]
 resolver = "3"
 
 [dependencies]
-staticizer-macros = { path = "macros", version = "0.1.0" }
+staticizer-macros = { path = "macros", version = "0.1.1" }

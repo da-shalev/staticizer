@@ -22,14 +22,14 @@ dependencies = [
 
 [[package]]
 name = "staticizer"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "staticizer-macros",
 ]
 
 [[package]]
 name = "staticizer-macros"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "quote",
  "syn",
