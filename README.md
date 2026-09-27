@@ -10,7 +10,7 @@ Staticizer hands the collected data to const code, so you can build a graph, val
 
 ## Requirements
 
-- **Nightly only.** Staticizer hooks into rustc through unstable compiler APIs. It builds the hook with your project's nightly the first time it sees that nightly, so the wrapper never has to match your toolchain. The toolchain needs the `rustc-dev` and `llvm-tools` components. CI tests the nightly pinned in `flake.nix` and the latest nightly.
+- **Nightly, or stable with one setting.** Staticizer's `#[register]` macro hooks into rustc through unstable compiler APIs; on stable, [one setting](USAGE.md#setup) allows them. Cargo builds the macro with your project's toolchain like any other dependency, so there is nothing to install. The toolchain needs the `rustc-dev` component. CI tests the latest nightly.
 - **Uses a small amount of unsafe code.**
 - **Tested on Linux, macOS and Windows** by the [cross-crate tests](tests/cross-crate). Release builds and LTO are also tested on Linux.
 

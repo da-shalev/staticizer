@@ -7,7 +7,7 @@ description = "Registration attribute for staticizer"
 repository = "https://github.com/da-shalev/staticizer"
 keywords = ["const", "compile-time", "registry", "staticizer"]
 categories = ["development-tools::procedural-macro-helpers"]
-include = ["/src", "/LICENSE"]
+include = ["/src", "/build.rs", "/LICENSE"]
 
 [lib]
 proc-macro = true
@@ -15,3 +15,6 @@ proc-macro = true
 [dependencies]
 syn = { version = "2", features = ["full"] }
 quote = "1"
+
+[package.metadata.rust-analyzer]
+rustc_private = true

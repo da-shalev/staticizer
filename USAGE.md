@@ -7,28 +7,22 @@ never refers to.
 
 ## Setup
 
-Install the compiler wrapper once, with any toolchain:
+Add `staticizer` as a dependency; nothing is installed. When a compiler (`rustc`,
+or `clippy-driver` under `cargo clippy`) expands `#[staticizer::register]`, the
+macro installs Staticizer's hook in it, and Cargo builds the macro with your
+project's toolchain. The toolchain needs the `rustc-dev` component.
 
-```sh
-cargo install staticizer --locked
-```
-
-To install from a checkout instead, run `cargo install --path . --locked --force` in it.
-
-Add this to the application's `.cargo/config.toml`:
+On stable, add this to the application's `.cargo/config.toml` so the macro crate,
+and only it, can use rustc's unstable APIs. It applies to `cargo build`,
+`cargo clippy` and rust-analyzer:
 
 ```toml
-[build]
-rustc-wrapper = "staticizer"
+[env]
+RUSTC_BOOTSTRAP = "staticizer_macros"
 ```
 
-The wrapper must be on `PATH`. It runs the compiler Cargo chose (`rustc`, or
-`clippy-driver` under `cargo clippy`) with Staticizer's compiler hook loaded. The
-first time it sees a toolchain it builds the hook with that toolchain and caches it
-in `~/.cache/staticizer`, so updating the nightly needs no reinstall. The toolchain
-needs the `rustc-dev` and `llvm-tools` components.
-
-After updating the wrapper, run `cargo clean` in the application to rebuild dependency metadata; Cargo does not track changes to the wrapper executable.
+The crate that evaluates `Records::ITEMS` must itself use `#[staticizer::register]`,
+since that is what installs the hook in its compilation.
 
 ## Example: add values declared in two crates
 
@@ -67,7 +61,7 @@ fn main() {
 }
 ```
 
-Run `cargo +nightly run`. Output:
+Run `cargo run`. Output:
 
 ```text
 Total: 42

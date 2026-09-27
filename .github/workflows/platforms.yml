@@ -7,14 +7,11 @@ on:
 
 jobs:
   cross-crate:
-    name: Cross-crate tests (${{ matrix.os }}, ${{ matrix.toolchain }})
+    name: Cross-crate tests (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        # The pinned nightly from flake.nix and whatever nightly is current, so the wrapper is
-        # tested against a toolchain it was not built with.
-        toolchain: [nightly-2026-09-21, nightly]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -24,12 +21,13 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ matrix.toolchain }}
-          components: rustc-dev, llvm-tools
-
-      - name: Install the wrapper
-        run: cargo install --path . --locked
+          toolchain: nightly
+          components: rustc-dev, clippy
 
       - name: Run the cross-crate tests
         working-directory: tests/cross-crate
         run: cargo test --locked
+
+      - name: Run Clippy on the cross-crate tests
+        working-directory: tests/cross-crate
+        run: cargo clippy --locked --all-targets
