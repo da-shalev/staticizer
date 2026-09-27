@@ -6,10 +6,10 @@ pub use staticizer_macros::register;
 pub struct Records<T: 'static>(std::marker::PhantomData<T>);
 
 impl<T: 'static> Records<T> {
-    /// Staticizer's compiler hook supplies this slice for the compiling crate.
+    /// Supplied by the hook `#[staticizer::register]` installs in the compiling crate.
     pub const ITEMS: &'static [&'static T] = {
-        // Keep evaluation dependent on T so the compiler hook can supply its records.
+        // Keep evaluation dependent on T so the hook can supply its records.
         let _ = size_of::<T>();
-        panic!("build this application with `staticizer` as Cargo's `rustc-wrapper`")
+        panic!("use `#[staticizer::register]` in the crate that evaluates `Records::ITEMS`")
     };
 }

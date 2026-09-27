@@ -31,15 +31,18 @@
 
         rustToolchain =
           target:
-          rust-bin.nightly."2026-09-21".default.override {
-            extensions = [
-              "rust-src"
-              "rust-analyzer"
-              "clippy"
-              "rustc-dev"
-            ];
-            targets = [ target ];
-          };
+          rust-bin.selectLatestNightlyWith (
+            toolchain:
+            toolchain.default.override {
+              extensions = [
+                "rust-src"
+                "rust-analyzer"
+                "clippy"
+                "rustc-dev"
+              ];
+              targets = [ target ];
+            }
+          );
 
         linuxBuildInputs = [
           (rustToolchain "x86_64-unknown-linux-gnu")
