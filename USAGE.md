@@ -7,13 +7,13 @@ never refers to.
 
 ## Setup
 
-Install the compiler wrapper with the tested nightly:
+Install the compiler wrapper once, with any toolchain:
 
 ```sh
-cargo +nightly-2026-09-21 install staticizer --locked
+cargo install staticizer --locked
 ```
 
-To install from a checkout instead, run `cargo +nightly-2026-09-21 install --path . --locked --force` in it.
+To install from a checkout instead, run `cargo install --path . --locked --force` in it.
 
 Add this to the application's `.cargo/config.toml`:
 
@@ -22,9 +22,11 @@ Add this to the application's `.cargo/config.toml`:
 rustc-wrapper = "staticizer"
 ```
 
-The wrapper must be on `PATH`. Use the same nightly for Staticizer and the
-application, with `rustc-dev` and `llvm-tools` installed. Inside the checkout's
-`nix develop` shell, omit `+nightly-2026-09-21`.
+The wrapper must be on `PATH`. It runs the compiler Cargo chose (`rustc`, or
+`clippy-driver` under `cargo clippy`) with Staticizer's compiler hook loaded. The
+first time it sees a toolchain it builds the hook with that toolchain and caches it
+in `~/.cache/staticizer`, so updating the nightly needs no reinstall. The toolchain
+needs the `rustc-dev` and `llvm-tools` components.
 
 After updating the wrapper, run `cargo clean` in the application to rebuild dependency metadata; Cargo does not track changes to the wrapper executable.
 

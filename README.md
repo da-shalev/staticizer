@@ -10,7 +10,7 @@ Staticizer hands the collected data to const code, so you can build a graph, val
 
 ## Requirements
 
-- **Nightly only: `nightly-2026-09-21`.** Staticizer wraps rustc and relies on unstable compiler APIs. Use this nightly for both the wrapper and your project, with the `rustc-dev` and `llvm-tools` components.
+- **Nightly only.** Staticizer hooks into rustc through unstable compiler APIs. It builds the hook with your project's nightly the first time it sees that nightly, so the wrapper never has to match your toolchain. The toolchain needs the `rustc-dev` and `llvm-tools` components. CI tests the nightly pinned in `flake.nix` and the latest nightly.
 - **Uses a small amount of unsafe code.**
 - **Tested on Linux, macOS and Windows** by the [cross-crate tests](tests/cross-crate). Release builds and LTO are also tested on Linux.
 
