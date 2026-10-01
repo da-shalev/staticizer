@@ -1,36 +1,26 @@
 # Usage
 
-Register a value by implementing `staticizer::Record<T>` for a type of your own under
-`#[staticizer::register]`, and read every registered value in const code through
-`staticizer::Records::<T>::ITEMS`. A constant sees the records of the crate that
-evaluates it and of that crate's dependencies, including dependencies its code never
-refers to. The order of records is the same on every build but carries no meaning; to
-order them, give `T` a field to sort by.
+Register a value with a `Record` impl marked `#[staticizer::register]`, and read every
+registered value in const code through `Records::<T>::ITEMS`.
 
 ## Setup
 
-Add `staticizer` as a dependency; nothing is installed. When a compiler (`rustc`,
-or `clippy-driver` under `cargo clippy`) expands `#[staticizer::register]`, the
-macro installs Staticizer's hook in it, and Cargo builds the macro with your
-project's toolchain. The toolchain needs the `rustc-dev` component.
+Add `staticizer` as a dependency. The toolchain needs the `rustc-dev` component.
 
-On stable, add this to the application's `.cargo/config.toml` so the macro crate,
-and only it, can use rustc's unstable APIs. It applies to `cargo build`,
-`cargo clippy` and rust-analyzer:
+The crate that reads records must contain a `#[staticizer::register]` itself, since
+that is what installs Staticizer's hook in its compiler.
+
+On stable, add this to the application's `.cargo/config.toml`. It lets Staticizer's macro
+crate, and no other crate, use unstable compiler APIs:
 
 ```toml
 [env]
 RUSTC_BOOTSTRAP = "staticizer_macros"
 ```
 
-The crate that evaluates `Records::ITEMS` must itself use `#[staticizer::register]`,
-since that is what installs the hook in its compilation.
+## Example
 
-## Example: add values declared in two crates
-
-Both crates depend on `staticizer`. The application also depends on a library named `totals`.
-
-**`totals/src/lib.rs`** declares 20 and defines how to add all registered amounts during compilation:
+The library `totals` registers 20 and adds up every registered amount:
 
 ```rust
 pub struct Amount(pub u32);
@@ -54,7 +44,7 @@ pub const fn total() -> u32 {
 }
 ```
 
-**The application's `src/main.rs`** declares another 22 and evaluates the total:
+The application registers 22 and reads the total:
 
 ```rust
 struct Extra;
@@ -71,27 +61,24 @@ fn main() {
 }
 ```
 
-Run `cargo run`. Output:
-
 ```text
 Total: 42
 ```
 
-`TOTAL` is evaluated in the application, so it adds the library's 20 and the
-application's 22. Code compiled inside `totals` sees only the library's 20.
+## Where records are read
 
-Change `Amount(22)` to `Amount(5)` and rebuild:
+Records are read where the code is compiled, and a crate sees only its own records and
+its dependencies'. The constant is evaluated in the application, so it sees both amounts.
+Calling `total()` at runtime returns 20 instead: a plain function is compiled once, inside
+`totals`, which cannot see the application.
 
-```text
-Total: 25
-```
-
-Use the same pattern to construct a graph or schedule: collect typed declarations
-with `Records::<T>::ITEMS` and transform them in const code.
+To see every crate's records, read them in a constant, or in a generic function the
+application instantiates.
 
 ## Records that depend on the application
 
-A library can register a value built from a type the application defines:
+A library can register a value built from a type the application defines. Reading the
+records for that type builds each one for it:
 
 ```rust
 #[staticizer::register]
@@ -99,3 +86,8 @@ impl<A: App> staticizer::Record<Handler, A> for Greeting {
     const ITEM: &'static Handler = &Handler(|| A::NAME);
 }
 ```
+
+## Order
+
+Records come in the same order on every build, but the order means nothing. To order
+them, give the record type a field to sort by.
