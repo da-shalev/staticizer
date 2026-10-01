@@ -67,22 +67,20 @@ Total: 42
 
 # Going further
 
-## Library functions called at runtime miss the application's records
+## Read records in a constant
 
-With the first example:
+Compute what you build from records in a constant in the application, and use that
+constant everywhere. A library function called at runtime only sees its own crate's
+records, as compiled before the application existed:
 
 ```rust
 const TOTAL: u32 = totals::total();
 
 fn main() {
-    println!("{TOTAL}"); // 42
-    println!("{}", totals::total()); // 20
+    println!("{TOTAL}"); // 42: computed in the application, with every record
+    println!("{}", totals::total()); // 20: compiled inside totals, before the 22 existed
 }
 ```
-
-The call in `main` runs `total()` as it was compiled inside `totals`, before the
-application's 22 existed. `TOTAL` is computed while the application is compiled, so it
-includes the 22. To get every record, compute the result in a constant in the application.
 
 ## Records that depend on the application
 

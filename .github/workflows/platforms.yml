@@ -2,6 +2,8 @@ name: platforms
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * *"
 
 jobs:
   cross-crate:
@@ -22,6 +24,7 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
           components: rustc-dev, clippy
+          targets: wasm32-unknown-unknown
 
       # The one setting USAGE.md documents for stable, applied to the whole build.
       - name: Allow the macro crate's unstable APIs on stable
@@ -36,6 +39,11 @@ jobs:
         env:
           CARGO_PROFILE_RELEASE_LTO: true
         run: cargo test --locked --release
+
+      - name: Build the cross-crate tests for WebAssembly
+        if: matrix.os == 'ubuntu-latest'
+        working-directory: tests/cross-crate
+        run: cargo test --locked --no-run --target wasm32-unknown-unknown
 
       - name: Run Clippy on the cross-crate tests
         working-directory: tests/cross-crate
