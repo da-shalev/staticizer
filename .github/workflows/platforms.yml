@@ -31,9 +31,11 @@ jobs:
           mkdir -p .cargo
           printf '[env]\nRUSTC_BOOTSTRAP = "staticizer_macros"\n' > .cargo/config.toml
 
-      - name: Run the cross-crate tests
+      - name: Run the cross-crate tests in release with LTO
         working-directory: tests/cross-crate
-        run: cargo test --locked
+        env:
+          CARGO_PROFILE_RELEASE_LTO: true
+        run: cargo test --locked --release
 
       - name: Run Clippy on the cross-crate tests
         working-directory: tests/cross-crate

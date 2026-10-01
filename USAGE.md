@@ -7,7 +7,7 @@ registered value in const code through `Records::<T>::ITEMS`.
 
 Add `staticizer` as a dependency. The toolchain needs the `rustc-dev` component.
 
-The crate that reads records must contain a `#[staticizer::register]` itself, since
+The application must contain a `#[staticizer::register]` itself, since
 that is what installs Staticizer's hook in its compiler.
 
 On stable, add this to the application's `.cargo/config.toml`. It lets Staticizer's macro
@@ -65,26 +65,86 @@ fn main() {
 Total: 42
 ```
 
-## Where records are read
+# Going further
 
-Records are read where the code is compiled, and a crate sees only its own records and
-its dependencies'. The constant is evaluated in the application, so it sees both amounts.
-Calling `total()` at runtime returns 20 instead: a plain function is compiled once, inside
-`totals`, which cannot see the application.
+## Library functions called at runtime miss the application's records
 
-To see every crate's records, read them in a constant, or in a generic function the
-application instantiates.
+With the first example:
+
+```rust
+const TOTAL: u32 = totals::total();
+
+fn main() {
+    println!("{TOTAL}"); // 42
+    println!("{}", totals::total()); // 20
+}
+```
+
+The call in `main` runs `total()` as it was compiled inside `totals`, before the
+application's 22 existed. `TOTAL` is computed while the application is compiled, so it
+includes the 22. To get every record, compute the result in a constant in the application.
 
 ## Records that depend on the application
 
-A library can register a value built from a type the application defines. Reading the
-records for that type builds each one for it:
+A library can register a value it cannot build on its own, because it depends on a type
+the application defines. The record is generic over that type, and is built when the
+application reads the records for its own type.
+
+### Why would I want this?
+
+An engine library provides systems, functions that run every frame and read the game's
+data. Only the game decides where that data is kept.
+
+A plain record is compiled inside the library, before the game exists, so its system
+cannot know where the data is and has to look it up every time it runs.
+
+A record generic over the game's type is compiled by the game itself. By then the game has
+decided where its data is, so the system goes straight to it, with no lookup.
+
+### Example
+
+The library `greeter` registers a greeting built from any `App`:
 
 ```rust
-#[staticizer::register]
-impl<A: App> staticizer::Record<Handler, A> for Greeting {
-    const ITEM: &'static Handler = &Handler(|| A::NAME);
+pub trait App: 'static {
+    const NAME: &'static str;
 }
+
+pub struct Greeting(pub fn() -> &'static str);
+
+struct Hello;
+
+#[staticizer::register]
+impl<A: App> staticizer::Record<Greeting, A> for Hello {
+    const ITEM: &'static Greeting = &Greeting(|| A::NAME);
+}
+```
+
+The application defines its `App`, registers a greeting of its own, and reads the records
+for its type:
+
+```rust
+struct Game;
+
+impl greeter::App for Game {
+    const NAME: &'static str = "Game";
+}
+
+#[staticizer::register]
+impl staticizer::Record<greeter::Greeting, Game> for Game {
+    const ITEM: &'static greeter::Greeting = &greeter::Greeting(|| "the application's own record");
+}
+
+fn main() {
+    for greeting in staticizer::Records::<greeter::Greeting, Game>::ITEMS {
+        println!("Hello from {}", (greeting.0)());
+    }
+}
+```
+
+```text
+Hello from the application's own record
+Hello from Game
 ```
 
 ## Order
