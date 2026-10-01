@@ -36,7 +36,7 @@ pub(crate) fn install() {
 }
 
 /// `Records::<T, A>::ITEMS`: the `ITEM` pointer of every `Record<T, A>` impl, ordered by the
-/// module path of each impl.
+/// stable hash rustc gives each impl, so the order is the same on every build.
 fn evaluate_records<'tcx>(
     tcx: TyCtxt<'tcx>,
     input: PseudoCanonicalInput<'tcx, GlobalId<'tcx>>,
@@ -70,26 +70,16 @@ fn evaluate_records<'tcx>(
                     .instantiate_identity()
                     .skip_normalization(),
             );
-            if implemented.args.type_at(1) != expected {
-                return None;
-            }
             let args = tcx.mk_args(&[implemented.self_ty().into(), expected.into(), app.into()]);
-            // Skip an impl for another `A`, such as a plain `Record<T>` when reading
-            // `Records<T, App>`; when the same type has impls for several `A`, count only the
-            // one this item resolves to.
+            // Keep the impl only if this is the impl `Record<T, A>` resolves to for its type:
+            // impls for another `T` or `A` resolve elsewhere or nowhere.
             let instance = Instance::try_resolve(tcx, typing_env, item, args).ok()??;
             if tcx.parent(instance.def_id()) != id {
                 return None;
             }
-            let path = tcx.def_path(id).to_string_no_crate_verbose();
             Some(
                 tcx.const_eval_instance(typing_env, instance, DUMMY_SP)
-                    .map(|value| {
-                        (
-                            format!("{}{path}", tcx.crate_name(id.krate)),
-                            value.try_to_scalar().unwrap(),
-                        )
-                    }),
+                    .map(|value| (tcx.def_path_hash(id), value.try_to_scalar().unwrap())),
             )
         })
         .collect::<Result<Vec<_>, _>>()?;

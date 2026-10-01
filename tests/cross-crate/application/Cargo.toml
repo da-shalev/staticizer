@@ -8,3 +8,5 @@ publish = false
 staticizer = { path = "../../.." }
 base = { path = "../base" }
 library = { path = "../library" }
+versioned_one = { package = "versioned", path = "../versioned-1" }
+versioned_two = { package = "versioned", path = "../versioned-2" }
