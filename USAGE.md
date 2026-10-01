@@ -1,9 +1,10 @@
 # Usage
 
-Register input values with `#[staticizer::register]` and read them in const code
-through `staticizer::Records::<T>::ITEMS`. A constant sees the records of the crate
-that evaluates it and of that crate's dependencies, including dependencies its code
-never refers to.
+Register a value by implementing `staticizer::Record<T>` for a type of your own under
+`#[staticizer::register]`, and read every registered value in const code through
+`staticizer::Records::<T>::ITEMS`. A constant sees the records of the crate that
+evaluates it and of that crate's dependencies, including dependencies its code never
+refers to. Records are ordered by the module path of their impls.
 
 ## Setup
 
@@ -33,8 +34,12 @@ Both crates depend on `staticizer`. The application also depends on a library na
 ```rust
 pub struct Amount(pub u32);
 
+struct Base;
+
 #[staticizer::register]
-static BASE: Amount = Amount(20);
+impl staticizer::Record<Amount> for Base {
+    const ITEM: &'static Amount = &Amount(20);
+}
 
 pub const fn total() -> u32 {
     let amounts = staticizer::Records::<Amount>::ITEMS;
@@ -51,8 +56,12 @@ pub const fn total() -> u32 {
 **The application's `src/main.rs`** declares another 22 and evaluates the total:
 
 ```rust
+struct Extra;
+
 #[staticizer::register]
-static EXTRA: totals::Amount = totals::Amount(22);
+impl staticizer::Record<totals::Amount> for Extra {
+    const ITEM: &'static totals::Amount = &totals::Amount(22);
+}
 
 const TOTAL: u32 = totals::total();
 
@@ -78,3 +87,14 @@ Total: 25
 
 Use the same pattern to construct a graph or schedule: collect typed declarations
 with `Records::<T>::ITEMS` and transform them in const code.
+
+## Records that depend on the application
+
+A library can register a value built from a type the application defines:
+
+```rust
+#[staticizer::register]
+impl<A: App> staticizer::Record<Handler, A> for Greeting {
+    const ITEM: &'static Handler = &Handler(|| A::NAME);
+}
+```
