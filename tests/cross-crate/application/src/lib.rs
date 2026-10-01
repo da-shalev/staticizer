@@ -45,6 +45,24 @@ fn records_are_read_for_the_named_app() {
     assert_eq!((FOR_APP, FOR_UNIT), (50 + 7, 50 + 3));
 }
 
+pub struct Named<'a>(pub &'a str);
+
+struct Label;
+
+#[staticizer::register]
+impl staticizer::Record<Named<'static>> for Label {
+    const ITEM: &'static Named<'static> = &Named("label");
+}
+
+#[test]
+fn records_of_a_type_with_a_lifetime() {
+    let names: Vec<&str> = staticizer::Records::<Named<'static>>::ITEMS
+        .iter()
+        .map(|named| named.0)
+        .collect();
+    assert_eq!(names, ["label"]);
+}
+
 #[test]
 fn records_are_ordered_by_module_path() {
     let amounts: Vec<u32> = staticizer::Records::<Amount>::ITEMS

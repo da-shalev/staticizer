@@ -64,10 +64,12 @@ fn evaluate_records<'tcx>(
     let mut items = tcx
         .all_impls(record)
         .filter_map(|id| {
-            let implemented = tcx
-                .impl_trait_ref(id)
-                .instantiate_identity()
-                .skip_normalization();
+            // The types being read have their lifetimes erased, so erase the impl's to match.
+            let implemented = tcx.erase_and_anonymize_regions(
+                tcx.impl_trait_ref(id)
+                    .instantiate_identity()
+                    .skip_normalization(),
+            );
             if implemented.args.type_at(1) != expected {
                 return None;
             }
