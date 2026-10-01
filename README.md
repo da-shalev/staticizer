@@ -19,3 +19,7 @@ Staticizer hands the collected data to const code, so you can build a graph, val
 Please feel free to open any issue(s) you have using staticizer.
 
 [Setup and code example](USAGE.md)
+
+## License
+
+Licensed under the [MIT license](LICENSE).
