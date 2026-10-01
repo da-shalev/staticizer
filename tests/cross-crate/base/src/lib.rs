@@ -1,5 +1,7 @@
 pub struct Amount(pub u32);
 
+pub struct Version(pub u32);
+
 struct Base;
 
 #[staticizer::register]

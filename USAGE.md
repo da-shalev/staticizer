@@ -4,7 +4,8 @@ Register a value by implementing `staticizer::Record<T>` for a type of your own 
 `#[staticizer::register]`, and read every registered value in const code through
 `staticizer::Records::<T>::ITEMS`. A constant sees the records of the crate that
 evaluates it and of that crate's dependencies, including dependencies its code never
-refers to. Records are ordered by the module path of their impls.
+refers to. The order of records is the same on every build but carries no meaning; to
+order them, give `T` a field to sort by.
 
 ## Setup
 

@@ -8,7 +8,7 @@ pub trait Record<T: 'static, A: 'static = ()> {
     const ITEM: &'static T;
 }
 
-/// `ITEM` of every registered `Record<T, A>` impl, ordered by module path.
+/// `ITEM` of every registered `Record<T, A>` impl, in an order that is the same on every build.
 ///
 /// `A` defers evaluation to the crate that names it: generic code keyed by `A` sees the
 /// records of whichever crate supplies `A`, and needs no `#[register]` of its own.

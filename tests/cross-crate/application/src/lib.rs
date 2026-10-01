@@ -64,10 +64,11 @@ fn records_of_a_type_with_a_lifetime() {
 }
 
 #[test]
-fn records_are_ordered_by_module_path() {
-    let amounts: Vec<u32> = staticizer::Records::<Amount>::ITEMS
+fn records_from_two_versions_of_a_crate() {
+    let mut versions: Vec<u32> = staticizer::Records::<base::Version>::ITEMS
         .iter()
-        .map(|amount| amount.0)
+        .map(|version| version.0)
         .collect();
-    assert_eq!(amounts, [1000, 100, 1, 10]);
+    versions.sort();
+    assert_eq!(versions, [1, 2]);
 }

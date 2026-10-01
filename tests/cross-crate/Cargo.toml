@@ -1,3 +1,5 @@
 [workspace]
 members = ["base", "library", "application"]
+# Two versions of one package, which a workspace cannot hold as members.
+exclude = ["versioned-1", "versioned-2"]
 resolver = "3"
