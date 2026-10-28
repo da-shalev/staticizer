@@ -1,17 +1,22 @@
 # Usage
 
-Register a value with a `Record` impl marked `#[staticizer::register]`, and read every
-registered value in const code through `Records::<T>::ITEMS`.
+Any crate can register values, called *records*. All records of one type form a list. Your
+main crate, the one with `main.rs`, declares a type, `MainApp`, and every list is read for
+`MainApp`.
+
+`MainApp` is what makes every list complete. Rust compiles every library before your main
+crate, so a library on its own sees only its own records. To fix this, a library writes its
+code generic over a type `A`, and your main crate fills `A` in with `MainApp`. That code is
+then compiled inside your main crate, where every crate's records are visible.
 
 ## Setup
 
-Add `staticizer` as a dependency. The toolchain needs the `rustc-dev` component.
+1. Add `staticizer` as a dependency.
+2. Install your toolchain's `rustc-dev` component.
+3. Put at least one `#[staticizer::register]` in your main crate. Without it, reading records
+   fails to compile.
 
-The application must contain a `#[staticizer::register]` itself, since
-that is what installs Staticizer's hook in its compiler.
-
-On stable, add this to the application's `.cargo/config.toml`. It lets Staticizer's macro
-crate, and no other crate, use unstable compiler APIs:
+On stable Rust, also add this to your main crate's `.cargo/config.toml`:
 
 ```toml
 [env]
@@ -20,88 +25,9 @@ RUSTC_BOOTSTRAP = "staticizer_macros"
 
 ## Example
 
-The library `totals` registers 20 and adds up every registered amount:
-
-```rust
-pub struct Amount(pub u32);
-
-struct Base;
-
-#[staticizer::register]
-impl staticizer::Record<Amount> for Base {
-    const ITEM: &'static Amount = &Amount(20);
-}
-
-pub const fn total() -> u32 {
-    let amounts = staticizer::Records::<Amount>::ITEMS;
-    let mut sum = 0;
-    let mut i = 0;
-    while i < amounts.len() {
-        sum += amounts[i].0;
-        i += 1;
-    }
-    sum
-}
-```
-
-The application registers 22 and reads the total:
-
-```rust
-struct Extra;
-
-#[staticizer::register]
-impl staticizer::Record<totals::Amount> for Extra {
-    const ITEM: &'static totals::Amount = &totals::Amount(22);
-}
-
-const TOTAL: u32 = totals::total();
-
-fn main() {
-    println!("Total: {TOTAL}");
-}
-```
-
-```text
-Total: 42
-```
-
-# Going further
-
-## Read records in a constant
-
-Compute what you build from records in a constant in the application, and use that
-constant everywhere. A library function called at runtime only sees its own crate's
-records, as compiled before the application existed:
-
-```rust
-const TOTAL: u32 = totals::total();
-
-fn main() {
-    println!("{TOTAL}"); // 42: computed in the application, with every record
-    println!("{}", totals::total()); // 20: compiled inside totals, before the 22 existed
-}
-```
-
-## Records that depend on the application
-
-A library can register a value it cannot build on its own, because it depends on a type
-the application defines. The record is generic over that type, and is built when the
-application reads the records for its own type.
-
-### Why would I want this?
-
-An engine library provides systems, functions that run every frame and read the game's
-data. Only the game decides where that data is kept.
-
-A plain record is compiled inside the library, before the game exists, so its system
-cannot know where the data is and has to look it up every time it runs.
-
-A record generic over the game's type is compiled by the game itself. By then the game has
-decided where its data is, so the system goes straight to it, with no lookup.
-
-### Example
-
-The library `greeter` registers a greeting built from any `App`:
+The library `greeter` needs the main crate's name, so it declares a trait `App` with a
+`NAME`. It registers a greeting that says that name, and has a function that prints every
+greeting:
 
 ```rust
 pub trait App: 'static {
@@ -116,67 +42,93 @@ struct Hello;
 impl<A: App> staticizer::Record<Greeting, A> for Hello {
     const ITEM: &'static Greeting = &Greeting(|| A::NAME);
 }
-```
 
-The application defines its `App`, registers a greeting of its own, and reads the records
-for its type:
-
-```rust
-struct Game;
-
-impl greeter::App for Game {
-    const NAME: &'static str = "Game";
-}
-
-#[staticizer::register]
-impl staticizer::Record<greeter::Greeting, Game> for Game {
-    const ITEM: &'static greeter::Greeting = &greeter::Greeting(|| "the application's own record");
-}
-
-fn main() {
-    for greeting in staticizer::Records::<greeter::Greeting, Game>::ITEMS {
+pub fn print_greetings<A: App>(_: A) {
+    for greeting in staticizer::Records::<Greeting, A>::ITEMS {
         println!("Hello from {}", (greeting.0)());
     }
 }
 ```
 
-```text
-Hello from the application's own record
-Hello from Game
-```
+`Records::<Greeting, A>::ITEMS` is every `Greeting` record for `A`. `print_greetings` takes
+the main crate's type as a value, so callers do not have to name it.
 
-## Order
-
-Records come in the same order on every build, but the order means nothing. To order
-them, give the record type a field to sort by.
-
-## Find one record
-
-`ITEMS` holds every record. To reach one of them without searching the list, ask for its
-position with `Position`, naming the same types as the record's impl.
-
-The application in the example above registers 22 with `impl Record<totals::Amount> for Extra`.
-This finds it:
+Your main crate declares `MainApp`, implements `greeter::App` for it, registers a greeting of
+its own, and passes `MainApp` in:
 
 ```rust
-const EXTRA: usize = staticizer::Position::<totals::Amount, (), Extra>::OF;
+struct MainApp;
+
+impl greeter::App for MainApp {
+    const NAME: &'static str = "MainApp";
+}
+
+struct Own;
+
+#[staticizer::register]
+impl staticizer::Record<greeter::Greeting, MainApp> for Own {
+    const ITEM: &'static greeter::Greeting = &greeter::Greeting(|| "the main crate's own record");
+}
 
 fn main() {
-    let amounts = staticizer::Records::<totals::Amount>::ITEMS;
-    println!("{}", amounts[EXTRA].0);
+    greeter::print_greetings(MainApp);
 }
 ```
 
 ```text
-22
+Hello from MainApp
+Hello from the main crate's own record
 ```
 
-`Position::<T, A, M>` takes three types:
+`print_greetings::<MainApp>` is compiled inside your main crate, so it prints both records:
+`greeter`'s, which took its name from `MainApp`, and the main crate's own.
 
-- `T`, here `totals::Amount`: the type of the registered values.
-- `A`, here `()`: the type the records are read for, the same `A` as in `Records::<T, A>`.
-  `Record<totals::Amount>` leaves it out, so it is `()`.
-- `M`, here `Extra`: the type the impl is for.
+That is the whole pattern. A library declares a trait for the main crate's type, and makes
+its records and reads generic over it. The trait holds whatever the library needs from the
+main crate. A library that needs nothing declares it empty.
 
-`EXTRA` is a constant, so `amounts[EXTRA]` costs what indexing any array does. Like `ITEMS`,
-compute it in the application, which sees every record.
+> [!CAUTION]
+> **Every read must use `MainApp`**, directly or through a generic `A: App`. A read without
+> it, such as `Records::<Greeting>::ITEMS`, is compiled inside the library. It misses records,
+> gives no error, and can even differ between debug and release builds.
+
+## Order
+
+Debug and release builds can order the list differently, so do not rely on the order. To get
+a fixed order, add a field to `Greeting` and sort by it.
+
+## Find one record
+
+`Position` gives the index of one record in the list, so you can read it without searching.
+Name the record by the three types in its impl. For the main crate's
+`impl Record<greeter::Greeting, MainApp> for Own`, that is
+`Position::<greeter::Greeting, MainApp, Own>::OF`:
+
+```rust
+const OWN: usize = staticizer::Position::<greeter::Greeting, MainApp, Own>::OF;
+
+fn main() {
+    println!("{}", (staticizer::Records::<greeter::Greeting, MainApp>::ITEMS[OWN].0)());
+}
+```
+
+```text
+the main crate's own record
+```
+
+`OWN` is a constant, so the read is a plain array index.
+
+A generic function that takes the type the impl is for, like `Own`, needs a `Record` bound on
+it. Without the bound, it fails to compile. In `greeter`:
+
+```rust
+pub fn greeting_of<A: App, Entry: staticizer::Record<Greeting, A> + 'static>() -> &'static str {
+    (staticizer::Records::<Greeting, A>::ITEMS[staticizer::Position::<Greeting, A, Entry>::OF].0)()
+}
+```
+
+`greeter::greeting_of::<MainApp, Own>()` returns `"the main crate's own record"`.
+
+A record whose impl is for a generic type, like
+`impl<X> Record<greeter::Greeting, MainApp> for Wrapper<X>`, is not in the list, so it has no
+position.
