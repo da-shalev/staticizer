@@ -1,6 +1,6 @@
 use base::{Amount, Share};
 
-struct Library;
+pub struct Library;
 
 #[staticizer::register]
 impl staticizer::Record<Amount> for Library {

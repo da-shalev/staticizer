@@ -1,6 +1,6 @@
 use base::Version;
 
-struct Release;
+pub struct Release;
 
 #[staticizer::register]
 impl staticizer::Record<Version> for Release {

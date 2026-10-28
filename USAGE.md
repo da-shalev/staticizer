@@ -149,3 +149,34 @@ Hello from Game
 
 Records come in the same order on every build, but the order means nothing. To order
 them, give the record type a field to sort by.
+
+## Find one record
+
+`ITEMS` holds every record. To reach one of them without searching the list, ask for its
+position with `Position`, naming the same types as the record's impl.
+
+The application in the example above registers 22 with `impl Record<totals::Amount> for Extra`.
+This finds it:
+
+```rust
+const EXTRA: usize = staticizer::Position::<totals::Amount, (), Extra>::OF;
+
+fn main() {
+    let amounts = staticizer::Records::<totals::Amount>::ITEMS;
+    println!("{}", amounts[EXTRA].0);
+}
+```
+
+```text
+22
+```
+
+`Position::<T, A, M>` takes three types:
+
+- `T`, here `totals::Amount`: the type of the registered values.
+- `A`, here `()`: the type the records are read for, the same `A` as in `Records::<T, A>`.
+  `Record<totals::Amount>` leaves it out, so it is `()`.
+- `M`, here `Extra`: the type the impl is for.
+
+`EXTRA` is a constant, so `amounts[EXTRA]` costs what indexing any array does. Like `ITEMS`,
+compute it in the application, which sees every record.
