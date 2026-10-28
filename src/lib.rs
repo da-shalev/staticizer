@@ -22,3 +22,12 @@ impl<T: 'static, A: 'static> Records<T, A> {
         panic!("use `#[staticizer::register]` in the crate that evaluates `Records::ITEMS`")
     };
 }
+
+pub struct Position<T: 'static, A: 'static, M: 'static>(std::marker::PhantomData<(T, A, M)>);
+
+impl<T: 'static, A: 'static, M: Record<T, A> + 'static> Position<T, A, M> {
+    pub const OF: usize = {
+        let _ = (size_of::<T>(), size_of::<A>(), size_of::<M>());
+        panic!("`M` is not in `ITEMS`: its impl is generic, or this crate has no `#[register]`")
+    };
+}

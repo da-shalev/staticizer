@@ -10,7 +10,7 @@ impl staticizer::Record<Amount> for Application {
 mod nested {
     use base::Amount;
 
-    struct Nested;
+    pub struct Nested;
 
     #[staticizer::register]
     impl staticizer::Record<Amount> for Nested {
@@ -71,4 +71,27 @@ fn records_from_two_versions_of_a_crate() {
         .collect();
     versions.sort();
     assert_eq!(versions, [1, 2]);
+}
+
+#[test]
+fn positions_find_records_from_every_crate() {
+    use base::Version;
+    use staticizer::{Position, Records};
+
+    let amounts = Records::<Amount>::ITEMS;
+    assert_eq!(amounts[Position::<Amount, (), Application>::OF].0, 100);
+    assert_eq!(amounts[Position::<Amount, (), nested::Nested>::OF].0, 1000);
+    assert_eq!(amounts[Position::<Amount, (), library::Library>::OF].0, 10);
+
+    let versions = Records::<Version>::ITEMS;
+    let one = Position::<Version, (), versioned_one::Release>::OF;
+    let two = Position::<Version, (), versioned_two::Release>::OF;
+    assert_eq!((versions[one].0, versions[two].0), (1, 2));
+}
+
+#[test]
+fn positions_are_read_for_the_named_app() {
+    const LIBRARY: u32 = base::share::<App, library::Library>();
+    const APPLICATION: u32 = base::share::<App, Application>();
+    assert_eq!((LIBRARY, APPLICATION), (50, 7));
 }

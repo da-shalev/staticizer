@@ -39,3 +39,7 @@ fn base_sees_only_its_own_records() {
     const TOTAL: u32 = total();
     assert_eq!(TOTAL, 1);
 }
+
+pub const fn share<A: 'static, M: staticizer::Record<Share, A> + 'static>() -> u32 {
+    staticizer::Records::<Share, A>::ITEMS[staticizer::Position::<Share, A, M>::OF].0
+}

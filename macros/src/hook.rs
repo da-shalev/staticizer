@@ -36,20 +36,20 @@ pub(crate) fn install() {
 }
 
 /// `Records::<T, A>::ITEMS`: the `ITEM` pointer of every `Record<T, A>` impl, ordered by the
-/// stable hash rustc gives each impl, so the order is the same on every build.
+/// stable hash rustc gives each impl, so the order is the same on every build. `Position::OF` is
+/// where `M`'s impl sits in that order.
 fn evaluate_records<'tcx>(
     tcx: TyCtxt<'tcx>,
     input: PseudoCanonicalInput<'tcx, GlobalId<'tcx>>,
 ) -> rustc_middle::mir::interpret::EvalToConstValueResult<'tcx> {
     let records = input.value.instance.def_id();
-    if tcx.crate_name(records.krate).as_str() != "staticizer"
-        || !tcx
-            .opt_item_name(records)
-            .is_some_and(|name| name.as_str() == "ITEMS")
-        || input.value.instance.args.has_non_region_param()
-    {
-        return eval_to_const_value_raw_provider(tcx, input);
-    }
+    let supplied = tcx.crate_name(records.krate).as_str() == "staticizer"
+        && !input.value.instance.args.has_non_region_param();
+    let position = match tcx.opt_item_name(records).as_ref().map(Symbol::as_str) {
+        Some("ITEMS") if supplied => false,
+        Some("OF") if supplied => true,
+        _ => return eval_to_const_value_raw_provider(tcx, input),
+    };
     let (expected, app) = (
         input.value.instance.args.type_at(0),
         input.value.instance.args.type_at(1),
@@ -74,16 +74,19 @@ fn evaluate_records<'tcx>(
             // Keep the impl only if this is the impl `Record<T, A>` resolves to for its type:
             // impls for another `T` or `A` resolve elsewhere or nowhere.
             let instance = Instance::try_resolve(tcx, typing_env, item, args).ok()??;
-            if tcx.parent(instance.def_id()) != id {
-                return None;
-            }
-            Some(
-                tcx.const_eval_instance(typing_env, instance, DUMMY_SP)
-                    .map(|value| (tcx.def_path_hash(id), value.try_to_scalar().unwrap())),
-            )
+            (tcx.parent(instance.def_id()) == id)
+                .then(|| (tcx.def_path_hash(id), implemented.self_ty(), instance))
         })
-        .collect::<Result<Vec<_>, _>>()?;
-    items.sort_by(|left, right| left.0.cmp(&right.0));
+        .collect::<Vec<_>>();
+    items.sort_by_key(|&(hash, ..)| hash);
+
+    if position {
+        let marker = input.value.instance.args.type_at(2);
+        let Some(index) = items.iter().position(|&(_, ty, _)| ty == marker) else {
+            return eval_to_const_value_raw_provider(tcx, input);
+        };
+        return Ok(ConstValue::from_target_usize(index as u64, &tcx));
+    }
 
     let size = tcx.data_layout.pointer_size();
     let mut allocation = Allocation::new(
@@ -92,9 +95,14 @@ fn evaluate_records<'tcx>(
         AllocInit::Uninit,
         (),
     );
-    for (index, (_, pointer)) in items.iter().enumerate() {
+    for (index, &(_, _, instance)) in items.iter().enumerate() {
+        let pointer = tcx.const_eval_instance(typing_env, instance, DUMMY_SP)?;
         allocation
-            .write_scalar(&tcx, alloc_range(size * index as u64, size), *pointer)
+            .write_scalar(
+                &tcx,
+                alloc_range(size * index as u64, size),
+                pointer.try_to_scalar().unwrap(),
+            )
             .unwrap();
     }
     allocation.mutability = rustc_ast::Mutability::Not;
