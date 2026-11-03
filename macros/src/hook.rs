@@ -89,12 +89,11 @@ fn evaluate_records<'tcx>(
     }
 
     let size = tcx.data_layout.pointer_size();
-    let mut allocation = Allocation::new(
-        size * items.len() as u64,
-        tcx.data_layout.pointer_align().abi,
-        AllocInit::Uninit,
-        (),
-    );
+    #[cfg(nightly)]
+    let align = tcx.data_layout.pointer_align();
+    #[cfg(not(nightly))]
+    let align = tcx.data_layout.pointer_align().abi;
+    let mut allocation = Allocation::new(size * items.len() as u64, align, AllocInit::Uninit, ());
     for (index, &(_, _, instance)) in items.iter().enumerate() {
         let pointer = tcx.const_eval_instance(typing_env, instance, DUMMY_SP)?;
         allocation
