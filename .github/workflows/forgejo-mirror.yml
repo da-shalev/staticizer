@@ -1,0 +1,14 @@
+name: Sync Forgejo mirror
+
+# Tell the git.dashalev.dev pull mirror to fetch right away instead of
+# waiting for its interval.
+on: [push, create, delete]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - run: >-
+          curl -fsS -X POST
+          -H "Authorization: token ${{ secrets.FORGEJO_TOKEN }}"
+          https://git.dashalev.dev/api/v1/repos/shalev/staticizer/mirror-sync
